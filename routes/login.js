@@ -25,30 +25,18 @@ module.exports = function login () {
   }
 
   return (req, res, next) => {
+/*
+sequelize.query('SELECT * FROM users WHERE name LIKE :search_name ',
+  { replacements: { search_name: 'ben%'  }, type: sequelize.QueryTypes.SELECT }
+*/
     verifyPreLoginChallenges(req)
-    /*
-    // This should REALLY be validated too
-String custname = request.getParameter("customerName"); 
-// Perform input validation to detect attacks
-String query = "SELECT account_balance FROM user_data WHERE user_name = ? ";
-PreparedStatement pstmt = connection.prepareStatement( query );
-pstmt.setString( 1, custname); 
-ResultSet results = pstmt.executeQuery( );
-    */
-  //  var email = req.body.email;
-  //  var password = req.body.password;
-  //  let preparedStatement1= new sql.PreparedStatement(),
-  //   query = `SELECT * FROM Users WHERE (email = @email AND password = @password) AND deletedAt IS NULL`;
-
-  //   preparedStatement1.input('email',sqlVarChar(50))
-  //   preparedStatement1.input('password',sqlVarChar(50))
-  //   preparedStatement1.prepare(query)
-  //   .then(function(){
-  //     return preparedStatement1.execute({email:email, password:password})
-  //   })   
-    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${insecurity.hash(req.body.password || '')}
-    ' AND deletedAt IS NULL`, { model: models.User, plain: true })
+    if(!req.body.email.match(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)){
+      return;
+    }
+    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${insecurity.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: true })
+    // models.sequelize.query(`SELECT * FROM Users WHERE email = ? AND password = ? AND deletedAt IS NULL`,[req.body.email, req.body.password], { model: models.User, plain: true })
       .then((authenticatedUser) => {
+        console.log(authenticatedUser)
         let user = utils.queryResultToJson(authenticatedUser)
         const rememberedEmail = insecurity.userEmailFrom(req)
         if (rememberedEmail && req.body.oauth) {
