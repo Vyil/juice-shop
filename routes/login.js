@@ -26,7 +26,28 @@ module.exports = function login () {
 
   return (req, res, next) => {
     verifyPreLoginChallenges(req)
-    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${insecurity.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: models.User, plain: true })
+    /*
+    // This should REALLY be validated too
+String custname = request.getParameter("customerName"); 
+// Perform input validation to detect attacks
+String query = "SELECT account_balance FROM user_data WHERE user_name = ? ";
+PreparedStatement pstmt = connection.prepareStatement( query );
+pstmt.setString( 1, custname); 
+ResultSet results = pstmt.executeQuery( );
+    */
+   var email = req.body.email;
+   var password = req.body.password;
+   let preparedStatement1= new sql.PreparedStatement(),
+    query = `SELECT * FROM Users WHERE (email = @email AND password = @password) AND deletedAt IS NULL`;
+
+    preparedStatement1.input('email',sqlVarChar(50))
+    preparedStatement1.input('password',sqlVarChar(50))
+    preparedStatement1.prepare(query)
+    .then(function(){
+      return preparedStatement1.execute({email:email, password:password})
+    })   
+    // models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${insecurity.hash(req.body.password || '')}
+    // ' AND deletedAt IS NULL`, { model: models.User, plain: true })
       .then((authenticatedUser) => {
         let user = utils.queryResultToJson(authenticatedUser)
         const rememberedEmail = insecurity.userEmailFrom(req)
